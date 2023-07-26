@@ -1,6 +1,7 @@
 ﻿using Chars.Utils;
 using System.Collections.Generic;
 using System.Drawing;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -13,29 +14,40 @@ namespace Chars.Pathfinding
     {
         public int Width { get; private set; }
         public int Height { get; private set; }
-        public int Size { get; private set; }
-        public Node[] Nodes { get; set; }
+        public Node[,] Nodes { get; set; }
 
         public Grid(int width, int height)
         {
             Width = width;
             Height = height;
-            Size = width * height;
-            Nodes = new Node[Size];
+            Nodes = new Node[width, height];
 
-            for (int i = 0; i < Width * Height; i++)
+            for (int y = 0; y < height; y++)
             {
-                int x = i % width;
-                int y = i / width;
-
-                Nodes[i] = new Node
+                for (int x = 0; x < width; x++)
                 {
-                    index = i,
-                    type = 0,
-                    position = new Vector2Int(x, y),
-                    cost = Random.Range(0, 10)
-                };
+                    Nodes[x, y] = new Node
+                    {
+                        type = 0,
+                        position = new Vector2Int(x, y),
+                        cost = Random.Range(0, 10)
+                    };
+                }
             }
+
+            //for (int i = 0; i < Width * Height; i++)
+            //{
+            //    int x = i % width;
+            //    int y = i / width;
+
+            //    Nodes[i] = new Node
+            //    {
+            //        index = i,
+            //        type = 0,
+            //        position = new Vector2Int(x, y),
+            //        cost = Random.Range(0, 10)
+            //    };
+            //}
         }
 
         List<Node> neighbors = new List<Node>();
@@ -50,7 +62,7 @@ namespace Chars.Pathfinding
                 if (MathUtils.InsideGridLimits(neighborPos.x, neighborPos.y, Width, Height))
                 {
                     //var neighborNode = Nodes[neighborPos.x, neighborPos.y];
-                    var neighborNode = Nodes[neighborPos.x + neighborPos.y * Width];
+                    var neighborNode = Nodes[neighborPos.x, neighborPos.y];
                     neighbors.Add(neighborNode);
                 }
             }
