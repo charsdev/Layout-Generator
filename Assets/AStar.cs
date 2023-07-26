@@ -1,34 +1,34 @@
 ﻿using Chars.Utils;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 namespace Chars.Pathfinding
 {
-    public class Dijkstra : PathFinding
+    public class AStar : PathFinding
     {
-        public Dijkstra(Grid grid, Node start, Node end) : base(grid, start, end)
+        public AStar(Grid grid, Node start, Node end) : base(grid, start, end)
         {
         }
 
         public override List<Node> FindPath()
         {
-            StartNode.cost = 0;
             Open.Clear();
             Close.Clear();
-
-            foreach (var item in Grid.Nodes)
-            {
-                item.cost = UnityEngine.Random.Range(0, 10);
-            }
 
             Open.Add(StartNode);
 
             while (Open.Count > 0)
             {
                 CurrentNode = Open.First();
-                CurrentNode = GetBestNode(CurrentNode);
+
+                foreach (var node in Open)
+                {
+                    if (node.priority <= CurrentNode.priority)
+                    {
+                        CurrentNode = node;
+                    }
+                }
 
                 if (CurrentNode == EndNode)
                 {
@@ -43,14 +43,19 @@ namespace Chars.Pathfinding
                 foreach (var adj in adjs)
                 {
                     if (!Close.Contains(adj)
-                        && Grid.Nodes[adj.position.x, adj.position.y].type != (int)Tiles.OBSTACLE)
+                        && Grid.Nodes[adj.position.x, adj.position.y].type != (byte)Tiles.OBSTACLE)
                     {
-                        float tentativeCost = CurrentNode.cost + adj.cost;
+                        var tentativeCost = adj.cost + GetManhattanDistance(CurrentNode, adj);
 
-                        if (adj.cost < CurrentNode.cost)
+                        //float tentativeCost = CurrentNode.cost + adj.cost;
+
+                        if (adj.cost < CurrentNode.cost || !Open.Contains(adj))
                         {
                             adj.parent = CurrentNode;
                             adj.cost = tentativeCost;
+                            adj.heuristic = GetManhattanDistance(adj, EndNode);
+                            adj.priority = adj.cost + adj.heuristic;
+
                             Open.Add(adj);
                         }
                     }
@@ -60,15 +65,10 @@ namespace Chars.Pathfinding
             return new List<Node>();
         }
 
-        private Node GetBestNode(Node currentNode)
-        {
-            return Open.FirstOrDefault(node => node.cost <= currentNode.cost);
-        }
-
         private float GetManhattanDistance(Node source, Node target)
         {
             return Mathf.Abs(source.position.x - target.position.x) + Mathf.Abs(source.position.y - target.position.y);
         }
     }
-}
 
+}

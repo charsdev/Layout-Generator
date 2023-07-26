@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
 namespace Chars.Pathfinding
 {
@@ -25,15 +24,17 @@ namespace Chars.Pathfinding
 
         protected List<Node> RetracePath()
         {
-            LinkedList<Node> path = new LinkedList<Node>();
+            List<Node> path = new List<Node>();
+            Node currentNode = EndNode;
 
-            while (CurrentNode.parent != null)
+            while (currentNode != StartNode)
             {
-                path.AddFirst(CurrentNode);
-                CurrentNode = CurrentNode.parent;
+                path.Add(currentNode);
+                currentNode = currentNode.parent;
             }
 
-            return path.ToList();
+            path.Reverse();
+            return path;
         }
     } 
 }

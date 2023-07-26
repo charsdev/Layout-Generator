@@ -16,6 +16,8 @@ namespace Chars.Pathfinding
         public int Height { get; private set; }
         public Node[,] Nodes { get; set; }
 
+        private List<Node> _neighbors = new();
+
         public Grid(int width, int height)
         {
             Width = width;
@@ -34,40 +36,25 @@ namespace Chars.Pathfinding
                     };
                 }
             }
-
-            //for (int i = 0; i < Width * Height; i++)
-            //{
-            //    int x = i % width;
-            //    int y = i / width;
-
-            //    Nodes[i] = new Node
-            //    {
-            //        index = i,
-            //        type = 0,
-            //        position = new Vector2Int(x, y),
-            //        cost = Random.Range(0, 10)
-            //    };
-            //}
         }
 
-        List<Node> neighbors = new List<Node>();
-        public List<Node> GetAdjacentsNodes(Node node)
-        {
-            neighbors.Clear();
 
-            foreach (var direction in MathUtils.EightDirectionsInt)
+        public List<Node> GetAdjacentsNodes(Node node, ref Vector2Int[] directions)
+        {
+            _neighbors.Clear();
+
+            foreach (var direction in directions)
             {
                 Vector2Int neighborPos = node.position + direction;
 
                 if (MathUtils.InsideGridLimits(neighborPos.x, neighborPos.y, Width, Height))
                 {
-                    //var neighborNode = Nodes[neighborPos.x, neighborPos.y];
                     var neighborNode = Nodes[neighborPos.x, neighborPos.y];
-                    neighbors.Add(neighborNode);
+                    _neighbors.Add(neighborNode);
                 }
             }
 
-            return neighbors;
+            return _neighbors;
         }
     }
 

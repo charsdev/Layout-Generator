@@ -5,7 +5,7 @@ namespace Chars.Pathfinding
     public class Node
     {
         public int index;
-        public int type; // free cell
+        public byte type; // free cell
         public Vector2Int position;
         public float heuristic; //h
         public float cost; //g

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Chars.Utils;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -13,24 +14,28 @@ namespace Chars.Pathfinding
         public override List<Node> FindPath()
         {
             Open.Clear();
+            Close.Clear();
+
             Open.Add(StartNode);
 
             while (Open.Count > 0)
             {
                 CurrentNode = Open.Last();
-                Open.Remove(CurrentNode);
 
                 if (CurrentNode == EndNode)
                 {
                     return RetracePath();
                 }
-                
+
+                Open.Remove(CurrentNode);
                 Close.Add(CurrentNode);
-                var adjs = Grid.GetAdjacentsNodes(CurrentNode);
+
+                var adjs = Grid.GetAdjacentsNodes(CurrentNode, ref MathUtils.FourDirectionsInt);
 
                 foreach (var adj in adjs)
                 {
-                    if (!Close.Contains(adj) && !Open.Contains(adj))
+                    if (!Close.Contains(adj) 
+                        && Grid.Nodes[adj.position.x, adj.position.y].type != (int)Tiles.OBSTACLE)
                     {
                         adj.parent = CurrentNode;
                         Open.Add(adj);
@@ -38,7 +43,6 @@ namespace Chars.Pathfinding
                 }
             }
 
-            Debug.Log("error " + CurrentNode.position);
             return new List<Node>();
         }
     }

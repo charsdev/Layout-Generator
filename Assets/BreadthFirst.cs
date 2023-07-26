@@ -1,79 +1,49 @@
-﻿using System.Collections.Generic;
+﻿using Chars.Utils;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 namespace Chars.Pathfinding
 {
-    class BreadthFirst
+    public class BreadthFirst : PathFinding
     {
-        public List<Node> FindPath(Node startNode, Node targetNode, ref Grid grid)
+        public BreadthFirst(Grid grid, Node start, Node end) : base(grid, start, end)
         {
-            Queue<Node> queue = new Queue<Node>();
-            HashSet<Node> visited = new HashSet<Node>();
+        }
 
-            queue.Enqueue(startNode);
-            visited.Add(startNode);
+        public override List<Node> FindPath()
+        {
+            Open.Clear();
+            Close.Clear();
 
-            while (queue.Count > 0)
+            Open.Add(StartNode);
+
+            while (Open.Count > 0)
             {
-                var currentNode = queue.Dequeue();
+                CurrentNode = Open.First();
 
-                if (currentNode.Equals(targetNode))
+                if (CurrentNode == EndNode)
                 {
-                    return GeneratePath(startNode, targetNode);
+                    return RetracePath();
                 }
 
-                var neighborsPositions = GetNeighborsPositions(currentNode, ref grid);
+                Open.Remove(CurrentNode);
+                Close.Add(CurrentNode);
 
-                foreach (var neighborPosition in neighborsPositions)
+                var neighbors = Grid.GetAdjacentsNodes(CurrentNode, ref MathUtils.FourDirectionsInt);
+
+                foreach (var currentNeighbor in neighbors)
                 {
-                    var currentNeighbor = grid.Nodes[neighborPosition.x, neighborPosition.y];
-
-                    if (!visited.Contains(currentNeighbor) 
-                        && grid.Nodes[currentNeighbor.position.x, currentNeighbor.position.y].type != (int)Tiles.OBSTACLE)
+                    if (!Close.Contains(currentNeighbor) 
+                        && Grid.Nodes[currentNeighbor.position.x, currentNeighbor.position.y].type != (int)Tiles.OBSTACLE)
                     {
-                        queue.Enqueue(currentNeighbor);
-                        visited.Add(currentNeighbor);
-                        currentNeighbor.parent = currentNode;
+                        currentNeighbor.parent = CurrentNode;
+                        Open.Add(currentNeighbor);
                     }
                 }
             }
 
-            return new List<Node>(); // No se encontró una ruta válida
-        }
-
-        public List<Node> GeneratePath(Node startNode, Node endNode)
-        {
-            List<Node> path = new List<Node>();
-            Node currentNode = endNode;
-
-            while (!currentNode.position.Equals(startNode.position))
-            {
-                path.Add(currentNode);
-                currentNode = currentNode.parent;
-            }
-
-            path.Reverse();
-            return path;
-        }
-
-        public List<Vector2Int> GetNeighborsPositions(Node node, ref Grid grid)
-        {
-            List<Vector2Int> neighbors = new List<Vector2Int>();
-
-            if (node.position.x > 0)
-                neighbors.Add(new Vector2Int(node.position.x - 1, node.position.y));
-
-            if (node.position.x < grid.Width - 1)
-                neighbors.Add(new Vector2Int(node.position.x + 1, node.position.y));
-
-            if (node.position.y > 0)
-                neighbors.Add(new Vector2Int(node.position.x, node.position.y - 1));
-
-            if (node.position.y < grid.Height - 1)
-                neighbors.Add(new Vector2Int(node.position.x, node.position.y + 1));
-
-            return neighbors;
+            return new List<Node>();
         }
     }
 }
