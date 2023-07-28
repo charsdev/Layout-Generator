@@ -35,9 +35,9 @@ namespace Chars.Pathfinding
                 foreach (var currentNeighbor in neighbors)
                 {
                     if (!Close.Contains(currentNeighbor) 
-                        && Grid.Nodes[currentNeighbor.position.x, currentNeighbor.position.y].type != (int)Tiles.OBSTACLE)
+                        && Grid.Nodes[currentNeighbor.GridPosition.x, currentNeighbor.GridPosition.y].Type != (int)Tiles.OBSTACLE)
                     {
-                        currentNeighbor.parent = CurrentNode;
+                        currentNeighbor.Parent = CurrentNode;
                         Open.Add(currentNeighbor);
                     }
                 }

@@ -1,9 +1,4 @@
-﻿using Chars.Utils;
-using System.Collections.Generic;
-using System.Drawing;
-using Unity.VisualScripting;
-using UnityEditor;
-using UnityEditor.Experimental.GraphView;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using MathUtils = Chars.Utils.MathUtils;
 
@@ -18,22 +13,45 @@ namespace Chars.Pathfinding
 
         private List<Node> _neighbors = new();
 
-        public Grid(int width, int height)
+        public readonly float NodeOffset;
+        public readonly int HalfHeight;
+        public readonly int HalfWidth;
+        public readonly int WidthMinusOne;
+        public readonly int HeightMinusOne;
+        //public readonly int HalfWidthMinusOne;
+        //public readonly int HalfHeightMinusOne;
+
+        public LayerMask obstacleLayer;
+
+        public Grid(int width, int height, Vector3 center, float nodeOffset)
         {
             Width = width;
             Height = height;
             Nodes = new Node[width, height];
+            NodeOffset = nodeOffset;
+            HalfHeight = Height >> 1;
+            HalfWidth = Width >> 1;
+            HeightMinusOne = Height - 1;
+            WidthMinusOne = Width - 1;
+            //HalfHeightMinusOne = HeightMinusOne >> 1;
+            //HalfWidthMinusOne = WidthMinusOne >> 1;
+
+            Vector2 bottonLeft = center - Vector3.right * HalfWidth - Vector3.up * HalfHeight;
 
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
                 {
+                    var point = bottonLeft + new Vector2(x, y) * nodeOffset;
+
                     Nodes[x, y] = new Node
                     {
-                        type = 0,
-                        position = new Vector2Int(x, y),
-                        cost = Random.Range(0, 10)
+                        Type = (int)Tiles.FREE,
+                        GridPosition = new Vector2Int(x, y),
+                        Cost = Random.Range(0, 10),
+                        WorldPosition = point
                     };
+                                   
                 }
             }
         }
@@ -45,7 +63,7 @@ namespace Chars.Pathfinding
 
             foreach (var direction in directions)
             {
-                Vector2Int neighborPos = node.position + direction;
+                Vector2Int neighborPos = node.GridPosition + direction;
 
                 if (MathUtils.InsideGridLimits(neighborPos.x, neighborPos.y, Width, Height))
                 {

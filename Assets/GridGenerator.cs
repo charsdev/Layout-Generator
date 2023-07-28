@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -18,19 +17,11 @@ namespace Chars.Pathfinding
         public int Width;
         public int Height;
         public GameObject _cellprefab;
-        public Transform _pivot;
         private Grid _grid;
-        private GameObject[,] _cells;
-        private float _offset = 1.25f;
+        [SerializeField] private float _offset = 1.25f;
+        [SerializeField] private LayerMask _layerMask;
 
         [SerializeField][Multiline] public string _map;
-
-        int _halfHeight;
-        int _halfWidth;
-        int _widthMinusOne;
-        int _heightMinusOne;
-        int _halfWidthMinusOne;
-        int _halfHeightMinusOne;
 
         private readonly Dictionary<int, Color> _colors = new Dictionary<int, Color>()
         {
@@ -41,44 +32,47 @@ namespace Chars.Pathfinding
 
         private void Start()
         {
-            _grid = new Grid(Width, Height);
-            _cells = new GameObject[Width, Height];
-
-            _halfHeight = Height / 2;
-            _halfWidth = Width / 2;
-
-            _heightMinusOne = Height - 1;
-            _widthMinusOne = Width - 1;
-
-            _halfHeightMinusOne = _heightMinusOne >> 1;
-            _halfWidthMinusOne = _widthMinusOne >> 1;
-
-            DrawGrid(ref _grid, _pivot.transform.position);
+            _grid = new Grid(Width, Height, transform.position, _offset);
 
             var doors = new List<Vector2Int>
             {
-                new Vector2Int(_halfWidth, _heightMinusOne), // Top door
-                new Vector2Int(_halfWidth, 0), // Bottom door
-                new Vector2Int(_widthMinusOne, _halfHeight), // Right door
-                new Vector2Int(0, _halfHeight ) // Left door
+                new Vector2Int(_grid.HalfWidth, _grid.HeightMinusOne), // Top door
+                new Vector2Int(_grid.HalfWidth, 0), // Bottom door
+                new Vector2Int(_grid.WidthMinusOne, _grid.HalfHeight), // Right door
+                new Vector2Int(0, _grid.HalfHeight ) // Left door
             };
 
             foreach (Vector2Int doorPosition in doors)
             {
-                var currentDoor = _cells[doorPosition.x, doorPosition.y];
-                _grid.Nodes[doorPosition.x, doorPosition.y].type = (int)Tiles.DOOR;
+                _grid.Nodes[doorPosition.x, doorPosition.y].Type = (int)Tiles.DOOR;
             }
 
             GenerateValidRoom(ref _grid, doors);
-            PaintGrid(_grid);
         }
 
-        private void PaintGrid(Grid grid)
+        private void Update()
         {
-            foreach (Node node in grid.Nodes)
+            foreach (var node in _grid.Nodes)
             {
-                SetCellColor(_cells[node.position.x, node.position.y], _colors[node.type]);
+                if (node.Type == (int)Tiles.DOOR)
+                {
+                    continue;
+                }
+
+                bool collisionCondition = Physics2D.OverlapBox(node.WorldPosition, Vector2.one, 0, _layerMask);
+
+                if (node.Walkable && node.Type == (int)Tiles.FREE && collisionCondition)
+                {
+                    node.Walkable = false;
+                    node.Type = (int)Tiles.OBSTACLE;
+                }
+                else if (!node.Walkable && node.Type == (int)Tiles.OBSTACLE && !collisionCondition)
+                {
+                    node.Walkable = true;
+                    node.Type = (int)Tiles.FREE;
+                }
             }
+            
         }
 
         private void GenerateValidRoom(ref Grid grid, List<Vector2Int> doorsPositions)
@@ -101,7 +95,7 @@ namespace Chars.Pathfinding
 
                 if (doorsPositions.Count == 1)
                 {
-                    doorsPositions.Add(new Vector2Int(_halfWidth, _halfHeight));
+                    doorsPositions.Add(new Vector2Int(grid.HalfWidth, grid.HalfHeight));
                 }
 
                 int totalSize = doorsPositions.Count - 1;
@@ -135,11 +129,11 @@ namespace Chars.Pathfinding
             Vector2Int[] regions = new Vector2Int[]
             {
                 new Vector2Int(0, 0),
-                new Vector2Int(0, _halfHeightMinusOne)
+                new Vector2Int(0, grid.HalfHeight)
             };
 
-            GenerateObstaclesAtRegion(ref grid, _halfHeightMinusOne, _halfWidthMinusOne, regions[randomIndexRegion], ref obstacleCount);
-            InvertRegions(ref grid, _halfHeightMinusOne, _halfWidthMinusOne, randomIndexRegion);
+            GenerateObstaclesAtRegion(ref grid, grid.HalfHeight, grid.HalfWidth, regions[randomIndexRegion], ref obstacleCount);
+            InvertRegions(ref grid, grid.HalfHeight, grid.HalfWidth, randomIndexRegion);
 
             if (mirror)
             {
@@ -160,7 +154,7 @@ namespace Chars.Pathfinding
                         //invierte lado 1 en lado 4;
                         if (IsFreeTile(x + halfWidth, y + halfHeight, _grid) && !IsDoorTile(halfWidth - x, halfHeight - y, grid))
                         {
-                            grid.Nodes[x + halfWidth, y + halfHeight].type = grid.Nodes[halfWidth - x, halfHeight - y].type;
+                            grid.Nodes[x + halfWidth, y + halfHeight].Type = grid.Nodes[halfWidth - x, halfHeight - y].Type;
                         }
 
                         if (!allowSimetry)
@@ -169,13 +163,13 @@ namespace Chars.Pathfinding
                         //invierte lado 4 en lado 3;
                         if (IsFreeTile(x + halfWidth, y, grid) && !IsDoorTile(x, halfHeight - y, grid))
                         {
-                            grid.Nodes[x, y + halfHeight].type = grid.Nodes[x, halfHeight - y].type;
+                            grid.Nodes[x, y + halfHeight].Type = grid.Nodes[x, halfHeight - y].Type;
                         }
 
                         //invierte lado 3 en lado 2;
                         if (IsFreeTile(x + halfWidth, y, grid) && !IsDoorTile(halfWidth - x, y, grid))
                         {
-                            grid.Nodes[x + halfWidth, y].type = grid.Nodes[halfWidth - x, y].type;
+                            grid.Nodes[x + halfWidth, y].Type = grid.Nodes[halfWidth - x, y].Type;
                         }
                     }
                     else
@@ -183,7 +177,7 @@ namespace Chars.Pathfinding
                         //invierte lado 3 en lado 2;
                         if (IsFreeTile(x + halfWidth, y, grid) && !IsDoorTile(halfWidth - x, halfWidth - y, grid))
                         {
-                            grid.Nodes[x + halfWidth, y].type = grid.Nodes[halfWidth - x, halfWidth - y].type;
+                            grid.Nodes[x + halfWidth, y].Type = grid.Nodes[halfWidth - x, halfWidth - y].Type;
                         }
 
                         if (!allowSimetry)
@@ -192,13 +186,13 @@ namespace Chars.Pathfinding
                         //invierte lado 2 en lado 4;
                         if (IsFreeTile(x + halfWidth, y + halfHeight, grid) && !IsDoorTile(halfWidth - x, halfHeight + y, grid))
                         {
-                            grid.Nodes[x + halfWidth, y + halfHeight].type = grid.Nodes[halfWidth - x, halfHeight + y].type;
+                            grid.Nodes[x + halfWidth, y + halfHeight].Type = grid.Nodes[halfWidth - x, halfHeight + y].Type;
                         }
 
                         //invierte lado 4 en lado 1;
                         if (IsFreeTile(halfWidth - x, halfHeight - y, grid) && !IsDoorTile(halfWidth - x, halfHeight + y, grid))
                         {
-                            grid.Nodes[halfWidth - x, halfHeight - y].type = grid.Nodes[halfWidth - x, halfHeight + y].type;
+                            grid.Nodes[halfWidth - x, halfHeight - y].Type = grid.Nodes[halfWidth - x, halfHeight + y].Type;
                         }
                     }
                 }
@@ -213,7 +207,7 @@ namespace Chars.Pathfinding
             {
                 for (int x = 0; x < grid.Width; x++)
                 {
-                    mirrorGrid[x, y] = grid.Nodes[_widthMinusOne - x, y];
+                    mirrorGrid[x, y] = grid.Nodes[grid.WidthMinusOne - x, y];
                 }
             }
 
@@ -232,7 +226,7 @@ namespace Chars.Pathfinding
 
                         if (IsFreeTile(currentCellPosition.x, currentCellPosition.y, grid))
                         {
-                            grid.Nodes[currentCellPosition.x, currentCellPosition.y].type = (int)Tiles.OBSTACLE;
+                            grid.Nodes[currentCellPosition.x, currentCellPosition.y].Type = (int)Tiles.OBSTACLE;
                             obstacleCount--;
                         }
                     }
@@ -242,38 +236,51 @@ namespace Chars.Pathfinding
 
         private bool IsFreeTile(int x, int y, Grid grid)
         {
-            return grid.Nodes[x, y].type == (int)Tiles.FREE;
+            return grid.Nodes[x, y].Type == (int)Tiles.FREE;
         }
 
         private bool IsDoorTile(int x, int y, Grid grid)
         {
-            return grid.Nodes[x, y].type == (int)Tiles.DOOR;
+            return grid.Nodes[x, y].Type == (int)Tiles.DOOR;
         }
 
         private void ClearGrid(ref Grid grid)
         {
             foreach (var node in grid.Nodes)
             {
-                if (node.type != (int)Tiles.FREE && node.type != (int)Tiles.DOOR)
+                if (node.Type != (int)Tiles.FREE && node.Type != (int)Tiles.DOOR)
                 {
-                    node.type = (int)Tiles.FREE;
+                    node.Type = (int)Tiles.FREE;
                 }
             }
         }
 
-        private void SetCellColor(GameObject cell, Color color)
+        private void DrawGrid(ref Grid grid)
         {
-            cell.GetComponent<Renderer>().material.color = color;
+            var floorHalfWidth = Width >> 1;
+            var floorHalfHeight = Height >> 1;
+
+            Vector2 bottonLeft = transform.position - Vector3.right * floorHalfWidth - Vector3.up * floorHalfHeight;
+            var WorldPosition = bottonLeft + new Vector2(floorHalfWidth, floorHalfHeight) * _offset;
+
+            Gizmos.DrawWireCube(WorldPosition, new Vector3(Width * _offset, Height * _offset));
+
+            if (!Application.isPlaying) 
+                return;
+
+            if (grid != null)
+            {
+                foreach (var node in grid.Nodes)
+                {
+                    Gizmos.color = _colors[node.Type];
+                    Gizmos.DrawCube(node.WorldPosition, Vector3.one * (_offset - 0.1f));
+                }
+            }
         }
 
-        private void DrawGrid(ref Grid grid, Vector3 initPosition)
+        private void OnDrawGizmos()
         {
-            foreach (var node in grid.Nodes)
-            {
-                var go = Instantiate(_cellprefab, (Vector2)initPosition + (Vector2)node.position * _offset, Quaternion.identity);
-                go.name = $"{node.position.x},{node.position.y}";
-                _cells[node.position.x, node.position.y] = go;
-            }
+            DrawGrid(ref _grid);
         }
 
         private IEnumerator DrawPath(List<Node> path)
@@ -284,9 +291,9 @@ namespace Chars.Pathfinding
                 if (index != path.Count - 1)
                 {
                     yield return new WaitForSeconds(0.05f);
-                    var x = node.position.x;
-                    var y = node.position.y;
-                    SetCellColor(_cells[x, y], Color.green);
+                    var x = node.GridPosition.x;
+                    var y = node.GridPosition.y;
+                    //SetCellColor(_cells[x, y], Color.green);
                     index++;
                 }
             }

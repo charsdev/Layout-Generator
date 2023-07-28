@@ -30,7 +30,7 @@ namespace Chars.Pathfinding
             while (currentNode != StartNode)
             {
                 path.Add(currentNode);
-                currentNode = currentNode.parent;
+                currentNode = currentNode.Parent;
             }
 
             path.Reverse();

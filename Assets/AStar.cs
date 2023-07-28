@@ -24,7 +24,7 @@ namespace Chars.Pathfinding
 
                 foreach (var node in Open)
                 {
-                    if (node.priority <= CurrentNode.priority)
+                    if (node.Priority <= CurrentNode.Priority)
                     {
                         CurrentNode = node;
                     }
@@ -43,18 +43,18 @@ namespace Chars.Pathfinding
                 foreach (var adj in adjs)
                 {
                     if (!Close.Contains(adj)
-                        && Grid.Nodes[adj.position.x, adj.position.y].type != (byte)Tiles.OBSTACLE)
+                        && Grid.Nodes[adj.GridPosition.x, adj.GridPosition.y].Type != (byte)Tiles.OBSTACLE)
                     {
-                        var tentativeCost = adj.cost + GetManhattanDistance(CurrentNode, adj);
+                        var tentativeCost = adj.Cost + GetManhattanDistance(CurrentNode, adj);
 
                         //float tentativeCost = CurrentNode.cost + adj.cost;
 
-                        if (adj.cost < CurrentNode.cost || !Open.Contains(adj))
+                        if (adj.Cost < CurrentNode.Cost || !Open.Contains(adj))
                         {
-                            adj.parent = CurrentNode;
-                            adj.cost = tentativeCost;
-                            adj.heuristic = GetManhattanDistance(adj, EndNode);
-                            adj.priority = adj.cost + adj.heuristic;
+                            adj.Parent = CurrentNode;
+                            adj.Cost = tentativeCost;
+                            adj.Heuristic = GetManhattanDistance(adj, EndNode);
+                            adj.Priority = adj.Cost + adj.Heuristic;
 
                             Open.Add(adj);
                         }
@@ -67,7 +67,7 @@ namespace Chars.Pathfinding
 
         private float GetManhattanDistance(Node source, Node target)
         {
-            return Mathf.Abs(source.position.x - target.position.x) + Mathf.Abs(source.position.y - target.position.y);
+            return Mathf.Abs(source.GridPosition.x - target.GridPosition.x) + Mathf.Abs(source.GridPosition.y - target.GridPosition.y);
         }
     }
 

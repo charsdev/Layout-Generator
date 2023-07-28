@@ -14,13 +14,13 @@ namespace Chars.Pathfinding
 
         public override List<Node> FindPath()
         {
-            StartNode.cost = 0;
+            StartNode.Cost = 0;
             Open.Clear();
             Close.Clear();
 
             foreach (var item in Grid.Nodes)
             {
-                item.cost = UnityEngine.Random.Range(0, 10);
+                item.Cost = UnityEngine.Random.Range(0, 10);
             }
 
             Open.Add(StartNode);
@@ -43,14 +43,14 @@ namespace Chars.Pathfinding
                 foreach (var adj in adjs)
                 {
                     if (!Close.Contains(adj)
-                        && Grid.Nodes[adj.position.x, adj.position.y].type != (int)Tiles.OBSTACLE)
+                        && Grid.Nodes[adj.GridPosition.x, adj.GridPosition.y].Type != (int)Tiles.OBSTACLE)
                     {
-                        float tentativeCost = CurrentNode.cost + adj.cost;
+                        float tentativeCost = CurrentNode.Cost + adj.Cost;
 
-                        if (adj.cost < CurrentNode.cost)
+                        if (adj.Cost < CurrentNode.Cost)
                         {
-                            adj.parent = CurrentNode;
-                            adj.cost = tentativeCost;
+                            adj.Parent = CurrentNode;
+                            adj.Cost = tentativeCost;
                             Open.Add(adj);
                         }
                     }
@@ -62,12 +62,12 @@ namespace Chars.Pathfinding
 
         private Node GetBestNode(Node currentNode)
         {
-            return Open.FirstOrDefault(node => node.cost <= currentNode.cost);
+            return Open.FirstOrDefault(node => node.Cost <= currentNode.Cost);
         }
 
         private float GetManhattanDistance(Node source, Node target)
         {
-            return Mathf.Abs(source.position.x - target.position.x) + Mathf.Abs(source.position.y - target.position.y);
+            return Mathf.Abs(source.GridPosition.x - target.GridPosition.x) + Mathf.Abs(source.GridPosition.y - target.GridPosition.y);
         }
     }
 }

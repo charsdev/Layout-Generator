@@ -35,9 +35,9 @@ namespace Chars.Pathfinding
                 foreach (var adj in adjs)
                 {
                     if (!Close.Contains(adj) 
-                        && Grid.Nodes[adj.position.x, adj.position.y].type != (int)Tiles.OBSTACLE)
+                        && Grid.Nodes[adj.GridPosition.x, adj.GridPosition.y].Type != (int)Tiles.OBSTACLE)
                     {
-                        adj.parent = CurrentNode;
+                        adj.Parent = CurrentNode;
                         Open.Add(adj);
                     } 
                 }
